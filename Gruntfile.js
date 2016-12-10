@@ -31,21 +31,28 @@ module.exports = function(grunt) {
     },
     concat: {
       dist: {
-        src: ['<banner:meta.banner>', '<file_strip_banner:src/fixto.js>'],
+        src: ['src/fixto.js'],
         dest: 'dist/fixto.js'
+      },
+      options: {
+        stripBanners: true,
+        banner: '<%= meta.banner %>'
       }
     },
-    min: {
-      dist: {
-        src: ['<banner:meta.banner>', '<config:concat.dist.dest>'],
-        dest: 'dist/fixto.min.js'
+    uglify: {
+      my_target: {
+        files: {
+          'dist/fixto.min.js': ['<%= concat.dist.dest %>']
+        }
+      },
+      options: {
+        banner: '<%= meta.banner %>'
       }
     },
     watch: {
-      files: '<config:jshint.files>',
+      files: '<%= jshint.files %>',
       tasks: ['jshint', 'qunit']
-    },
-    uglify: {}
+    }
   });
 
   grunt.loadNpmTasks('grunt-contrib-jshint');
@@ -56,6 +63,6 @@ module.exports = function(grunt) {
 
   // Default task.
   grunt.registerTask('default', ['jshint', 'qunit']);
-  grunt.registerTask('make', ['jshint', 'qunit', 'concat', 'min']);
+  grunt.registerTask('make', ['jshint', 'qunit', 'concat', 'uglify']);
 
 };

@@ -4,7 +4,12 @@
   "description": "A jQuery plugin for custom sticky positioning",
   "main": "dist/fixto.min.js",
   "devDependencies": {
-    "grunt": "^0.3.17"
+    "grunt": "^1.0.1",
+    "grunt-contrib-concat": "^1.0.1",
+    "grunt-contrib-jshint": "^1.1.0",
+    "grunt-contrib-qunit": "^1.2.0",
+    "grunt-contrib-uglify": "^2.0.0",
+    "grunt-contrib-watch": "^1.0.0"
   },
   "repository": {
     "type": "git",

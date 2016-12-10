@@ -10,8 +10,21 @@ module.exports = function(grunt) {
         '* http://github.com/bbarakaci/fixto/' +
         '*/'
     },
-    lint: {
-      files: ['grunt.js', 'src/**/*.js', 'test/**/*.js']
+    jshint: {
+      files: ['Gruntfile.js', 'src/**/*.js', 'test/**/*.js'],
+      options: {
+        curly: true,
+        eqeqeq: true,
+        immed: true,
+        latedef: true,
+        newcap: true,
+        noarg: true,
+        sub: true,
+        undef: true,
+        boss: true,
+        eqnull: true,
+        browser: true
+      }
     },
     qunit: {
       files: ['test/**/*.html']
@@ -29,30 +42,20 @@ module.exports = function(grunt) {
       }
     },
     watch: {
-      files: '<config:lint.files>',
-      tasks: 'lint qunit'
-    },
-    jshint: {
-      options: {
-        curly: true,
-        eqeqeq: true,
-        immed: true,
-        latedef: true,
-        newcap: true,
-        noarg: true,
-        sub: true,
-        undef: true,
-        boss: true,
-        eqnull: true,
-        browser: true
-      },
-      globals: {}
+      files: '<config:jshint.files>',
+      tasks: ['jshint', 'qunit']
     },
     uglify: {}
   });
 
+  grunt.loadNpmTasks('grunt-contrib-jshint');
+  grunt.loadNpmTasks('grunt-contrib-qunit');
+  grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-contrib-uglify');
+
   // Default task.
-  grunt.registerTask('default', 'lint qunit');
-  grunt.registerTask('make', 'lint qunit concat min');
+  grunt.registerTask('default', ['jshint', 'qunit']);
+  grunt.registerTask('make', ['jshint', 'qunit', 'concat', 'min']);
 
 };

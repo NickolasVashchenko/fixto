@@ -419,13 +419,18 @@ var fixto = (function ($, window, document) {
             return limiter;
         },
 
-        isBetween: function () {
+        isBetween: function (mindTop) {
             return this.c._windowLimiter < this.c._parentLimiter &&
-              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - this.c._mindtop());
+              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - mindTop);
         },
 
-        initStyle: function (marginTop) {
-            return this.c._mindtop() - computedStyle.toFloat(marginTop) + 'px';
+        initStyle: function (mindTop, margin) {
+            return mindTop - computedStyle.toFloat(margin) + 'px';
+        },
+
+        innerDiff: function (mindTop, childStyles) {
+            return (this.c._parentLimiter - this.c._windowLimiter) -
+              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
         }
 
     });
@@ -442,13 +447,18 @@ var fixto = (function ($, window, document) {
             return limiter;
         },
 
-        isBetween: function () {
+        isBetween: function (mindTop) {
             return this.c._windowLimiter < this.c._parentLimiter &&
-            this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.child) + this.c.child.offsetHeight + this.c._mindtop());
+            this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.child) + this.c.child.offsetHeight + mindTop);
         },
 
-        initStyle: function (marginTop) {
-          return computedStyle.toFloat(marginTop) + 'px';
+        initStyle: function (mindTop, margin) {
+          return computedStyle.toFloat(margin) + 'px';
+        },
+
+        innerDiff: function (mindTop, childStyles) {
+            return (this.c._windowLimiter - this.c._parentLimiter) -
+              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + mindTop);
         }
     });
 
@@ -485,17 +495,18 @@ var fixto = (function ($, window, document) {
 
         _onscroll: function _onscroll() {
 
+            var mindTop = this._mindtop();
             this._windowLimiter = this._calc.windowLimiter();
             this._parentLimiter = this._calc.parentLimiter();
 
-            if (!this.fixed && this._calc.isBetween() && this._viewportIsBigEnough()) {
-                this._fix();
+            if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
+                this._fix(mindTop);
             } else {
-                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - this._mindtop())) {
+                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - mindTop)) {
                     this._unfix();
                     return;
                 }
-                this._adjust();
+                this._adjust(mindTop);
             }
         },
 
@@ -508,9 +519,9 @@ var fixto = (function ($, window, document) {
           return this._viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
-        _adjust: function _adjust() {
+        _adjust: function _adjust(mindTop) {
             var top = 0;
-            var diff = 0;
+            var inner_diff = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
 
@@ -523,13 +534,11 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + this._mindtop());
+            inner_diff = this._calc.innerDiff(mindTop, childStyles);
 
-            if(diff>0) {
-                diff = 0;
-            }
+            if(inner_diff > 0) { inner_diff = 0; }
 
-            this.child.style.top = (diff + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            this.child.style.top = (inner_diff + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         // Calculate cumulative offset of the element.
@@ -573,7 +582,7 @@ var fixto = (function ($, window, document) {
             return context;
         },
 
-        _fix: function () {
+        _fix: function (mindTop) {
             var child = this.child;
             var childStyle = child.style;
             var childStyles = computedStyle.getAll(child);
@@ -603,10 +612,10 @@ var fixto = (function ($, window, document) {
             childStyle.width = width;
 
             childStyle.position = 'fixed';
-            childStyle.top = this._calc.initStyle(childStyles.marginTop);
+            childStyle.top = this._calc.initStyle(mindTop, childStyles.marginTop);
             this._$child.addClass(this.options.className);
             this.fixed = true;
-            this._adjust();
+            this._adjust(mindTop);
         },
 
         _unfix: function () {

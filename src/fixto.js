@@ -328,7 +328,7 @@ var fixto = (function ($, window, document) {
                     }
                 }
             }
-            return top;
+            return top + this.options.top;
         },
 
         // Public method to stop the behaviour of this instance.
@@ -419,9 +419,9 @@ var fixto = (function ($, window, document) {
             return limiter;
         },
 
-        outOfPosition: function () {
+        isBetween: function () {
             return this.c._windowLimiter < this.c._parentLimiter &&
-            this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.child) - this.c.options.top - this.c._mindtop());
+              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.child) - this.c._mindtop());
         }
 
     });
@@ -438,9 +438,9 @@ var fixto = (function ($, window, document) {
             return limiter;
         },
 
-        outOfPosition: function () {
+        isBetween: function () {
             return this.c._windowLimiter < this.c._parentLimiter &&
-            this.c._windowLimiter > (this.c._fullOffset('offsetBottom', this.child) + this.c.options.top + this.c._mindtop());
+            this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.child) + this.c.child.offsetHeight + this.c._mindtop());
         }
     });
 
@@ -480,11 +480,11 @@ var fixto = (function ($, window, document) {
             this._windowLimiter = this._calc.windowLimiter();
             this._parentLimiter = this._calc.parentLimiter();
 
-            if (!this.fixed && this._shouldFix()) {
+            if (!this.fixed && this._calc.isBetween() && this._viewportIsBigEnough()) {
                 this._fix();
                 this._adjust();
             } else {
-                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - this.options.top - this._mindtop())) {
+                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - this._mindtop())) {
                     this._unfix();
                     return;
                 }
@@ -492,14 +492,8 @@ var fixto = (function ($, window, document) {
             }
         },
 
-        _shouldFix: function() {
-            if (this._windowLimiter < this._parentLimiter && this._windowLimiter > (this._fullOffset('offsetTop', this.child) - this.options.top - this._mindtop()) ) {
-                return (this.options.mindViewport && !this._isViewportAvailable()) ? false : true;
-            }
-        },
-
-        _isViewportAvailable: function() {
-            return this._calc._viewportFreeSpace >= 0;
+        _viewportIsBigEnough: function() {
+            return !this.options.mindViewport || this._calc._viewportFreeSpace >= 0;
         },
 
         _viewportFreeSpace: function() {
@@ -523,13 +517,13 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop + this.options.top);
+            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
 
             if(diff>0) {
                 diff = 0;
             }
 
-            this.child.style.top = (diff + mindTop + top + this.options.top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            this.child.style.top = (diff + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         // Calculate cumulative offset of the element.
@@ -603,7 +597,7 @@ var fixto = (function ($, window, document) {
             childStyle.width = width;
 
             childStyle.position = 'fixed';
-            childStyle.top = this._mindtop() + this.options.top - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            childStyle.top = this._mindtop() - computedStyle.toFloat(childStyles.marginTop) + 'px';
             this._$child.addClass(this.options.className);
             this.fixed = true;
         },
@@ -693,7 +687,7 @@ var fixto = (function ($, window, document) {
         },
 
         refresh: function() {
-            this.child.style.top = this._mindtop() + this.options.top + 'px';
+            this.child.style.top = this._mindtop() + 'px';
         }
     });
 

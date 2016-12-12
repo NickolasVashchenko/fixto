@@ -69,8 +69,8 @@
   test('onscroll', function() {
     var instance = this.instance;
     instance._onscroll();
-    equal(instance._scrollTop, 0, 'scrolltop set');
-    equal(instance._parentBottom, -9975,'paddingBotom set');
+    equal(instance._windowLimiter, 0, 'scrolltop set');
+    equal(instance._parentLimiter, -9975,'paddingBottom set');
     
   });
   

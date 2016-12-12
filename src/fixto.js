@@ -301,19 +301,21 @@ var fixto = (function ($, window, document) {
         this.options = {
             className: 'fixto-fixed',
             top: 0,
-            mindViewport: false
+            mindViewport: false,
+            invert: false
         };
         this._setOptions(options);
     }
 
     FixTo.prototype = {
         // Returns the total outerHeight of the elements passed to mind option. Will return 0 if none.
+        // In case "invert" function is active, this method does not change behaviour, since it accounts
+        // sized of all given object, independently on whether they are on top or on bottom.
         _mindtop: function () {
             var top = 0;
             if(this._$mind) {
                 var el;
                 var rect;
-                var height;
                 for(var i=0, l=this._$mind.length; i<l; i++) {
                     el = this._$mind[i];
                     rect = el.getBoundingClientRect();
@@ -342,6 +344,7 @@ var fixto = (function ($, window, document) {
             if(!this._running) {
                 this._start();
                 this._running = true;
+
             }
         },
 
@@ -396,6 +399,51 @@ var fixto = (function ($, window, document) {
         }
     };
 
+
+    function DirectCalc (container) {
+        this.c = container;
+    }
+    function InvertedCalc (container) {
+        this.c = container;
+    }
+
+    $.extend(DirectCalc.prototype, {
+        windowLimiter: function () {
+            return document.documentElement.scrollTop || document.body.scrollTop;
+        },
+
+        parentLimiter: function () {
+            var limiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
+            if (this.c.options.mindBottomPadding !== false)
+                limiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom');
+            return limiter;
+        },
+
+        outOfPosition: function () {
+            return this.c._windowLimiter < this.c._parentLimiter &&
+            this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.child) - this.c.options.top - this.c._mindtop());
+        }
+
+    });
+
+    $.extend(InvertedCalc.prototype, {
+        windowLimiter: function () {
+            return (document.documentElement.scrollTop || document.body.scrollTop) + this.c._viewportHeight;
+        },
+
+        parentLimiter: function () {
+            var limiter = this.c.parent.offsetHeight;
+            if (this.c.options.mindBottomPadding !== false)
+                limiter += computedStyle.getFloat(this.c.parent, 'paddingTop');
+            return limiter;
+        },
+
+        outOfPosition: function () {
+            return this.c._windowLimiter < this.c._parentLimiter &&
+            this.c._windowLimiter > (this.c._fullOffset('offsetBottom', this.child) + this.c.options.top + this.c._mindtop());
+        }
+    });
+
     // Class FixToContainer
     function FixToContainer(child, parent, options) {
         FixTo.call(this, child, parent, options);
@@ -428,18 +476,15 @@ var fixto = (function ($, window, document) {
         _toresize : ieversion===8 ? document.documentElement : window,
 
         _onscroll: function _onscroll() {
-            this._scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-            this._parentBottom = (this.parent.offsetHeight + this._fullOffset('offsetTop', this.parent));
 
-            if (this.options.mindBottomPadding !== false) {
-                this._parentBottom -= computedStyle.getFloat(this.parent, 'paddingBottom');
-            }
+            this._windowLimiter = this._calc.windowLimiter();
+            this._parentLimiter = this._calc.parentLimiter();
 
             if (!this.fixed && this._shouldFix()) {
                 this._fix();
                 this._adjust();
             } else {
-                if (this._scrollTop > this._parentBottom || this._scrollTop < (this._fullOffset('offsetTop', this._ghostNode) - this.options.top - this._mindtop())) {
+                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - this.options.top - this._mindtop())) {
                     this._unfix();
                     return;
                 }
@@ -448,17 +493,18 @@ var fixto = (function ($, window, document) {
         },
 
         _shouldFix: function() {
-            if (this._scrollTop < this._parentBottom && this._scrollTop > (this._fullOffset('offsetTop', this.child) - this.options.top - this._mindtop())) {
-                if (this.options.mindViewport && !this._isViewportAvailable()) {
-                    return false;
-                }
-                return true;
+            if (this._windowLimiter < this._parentLimiter && this._windowLimiter > (this._fullOffset('offsetTop', this.child) - this.options.top - this._mindtop()) ) {
+                return (this.options.mindViewport && !this._isViewportAvailable()) ? false : true;
             }
         },
 
         _isViewportAvailable: function() {
-            var childStyles = computedStyle.getAll(this.child);
-            return this._viewportHeight > (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
+            return this._calc._viewportFreeSpace >= 0;
+        },
+
+        _viewportFreeSpace: function() {
+          var childStyles = computedStyle.getAll(this.c.child);
+          return this._viewportHeight - (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
         _adjust: function _adjust() {
@@ -477,7 +523,7 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            diff = (this._parentBottom - this._scrollTop) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop + this.options.top);
+            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop + this.options.top);
 
             if(diff>0) {
                 diff = 0;
@@ -492,7 +538,7 @@ var fixto = (function ($, window, document) {
             var offset = elm[offsetName];
             var offsetParent = elm.offsetParent;
 
-            // Add offset of the ascendent tree until we reach to the document root or to the given context
+            // Add offset of the ascendant tree until we reach to the document root or to the given context
             while (offsetParent !== null && offsetParent !== context) {
                 offset = offset + offsetParent[offsetName];
                 offsetParent = offsetParent.offsetParent;
@@ -599,6 +645,9 @@ var fixto = (function ($, window, document) {
         },
 
         _start: function() {
+            // Setting strategy for calculating position depending on the "invert" option
+            this._calc = this.options.invert ? new InvertedCalc(this) : new DirectCalc(this);
+
             // Trigger onscroll to have the effect immediately.
             this._onscroll();
 
@@ -671,7 +720,7 @@ var fixto = (function ($, window, document) {
     };
 
     /*
-    No support for ie lt 8
+        No support for ie lt 8
     */
 
     if(ieversion<8){

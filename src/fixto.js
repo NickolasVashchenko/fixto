@@ -431,6 +431,11 @@ var fixto = (function ($, window, document) {
         innerDiff: function (mindTop, childStyles) {
             return (this.c._parentLimiter - this.c._windowLimiter) -
               (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
+        },
+
+        isAway: function(mindTop) {
+            return this.c._windowLimiter > this.c._parentLimiter ||
+              this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - mindTop);
         }
 
     });
@@ -459,6 +464,11 @@ var fixto = (function ($, window, document) {
         innerDiff: function (mindTop, childStyles) {
             return (this.c._windowLimiter - this.c._parentLimiter) -
               (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + mindTop);
+        },
+
+        isAway: function() {
+            return this.c._windowLimiter < this.c._parentLimiter ||
+              this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) + this.c.child.offsetHeight + mindTop);
         }
     });
 
@@ -502,7 +512,7 @@ var fixto = (function ($, window, document) {
             if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
                 this._fix(mindTop);
             } else {
-                if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - mindTop)) {
+                if (this.fixed && this._calc.isAway(mindTop)) {
                     this._unfix();
                     return;
                 }

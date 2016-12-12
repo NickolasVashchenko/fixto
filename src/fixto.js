@@ -567,7 +567,7 @@ var fixto = (function ($, window, document) {
             return context;
         },
 
-        _fix: function _fix() {
+        _fix: function () {
             var child = this.child;
             var childStyle = child.style;
             var childStyles = computedStyle.getAll(child);
@@ -602,7 +602,7 @@ var fixto = (function ($, window, document) {
             this.fixed = true;
         },
 
-        _unfix: function _unfix() {
+        _unfix: function () {
             var childStyle = this.child.style;
             this._replacer.hide();
             childStyle.position = this._childOriginalPosition;

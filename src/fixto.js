@@ -421,7 +421,11 @@ var fixto = (function ($, window, document) {
 
         isBetween: function () {
             return this.c._windowLimiter < this.c._parentLimiter &&
-              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.child) - this.c._mindtop());
+              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - this.c._mindtop());
+        },
+
+        initStyle: function (marginTop) {
+            return this.c._mindtop() - computedStyle.toFloat(marginTop) + 'px';
         }
 
     });
@@ -441,6 +445,10 @@ var fixto = (function ($, window, document) {
         isBetween: function () {
             return this.c._windowLimiter < this.c._parentLimiter &&
             this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.child) + this.c.child.offsetHeight + this.c._mindtop());
+        },
+
+        initStyle: function (marginTop) {
+          return computedStyle.toFloat(marginTop) + 'px';
         }
     });
 
@@ -482,7 +490,6 @@ var fixto = (function ($, window, document) {
 
             if (!this.fixed && this._calc.isBetween() && this._viewportIsBigEnough()) {
                 this._fix();
-                this._adjust();
             } else {
                 if (this._windowLimiter > this._parentLimiter || this._windowLimiter < (this._fullOffset('offsetTop', this._ghostNode) - this._mindtop())) {
                     this._unfix();
@@ -493,17 +500,16 @@ var fixto = (function ($, window, document) {
         },
 
         _viewportIsBigEnough: function() {
-            return !this.options.mindViewport || this._calc._viewportFreeSpace >= 0;
+            return !this.options.mindViewport || this._viewportFreeSpace() >= 0;
         },
 
         _viewportFreeSpace: function() {
-          var childStyles = computedStyle.getAll(this.c.child);
-          return this._viewportHeight - (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
+          var childStyles = computedStyle.getAll(this.child);
+          return this._viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
         _adjust: function _adjust() {
             var top = 0;
-            var mindTop = this._mindtop();
             var diff = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
@@ -517,7 +523,7 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
+            diff = (this._parentLimiter - this._windowLimiter) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + this._mindtop());
 
             if(diff>0) {
                 diff = 0;
@@ -597,9 +603,10 @@ var fixto = (function ($, window, document) {
             childStyle.width = width;
 
             childStyle.position = 'fixed';
-            childStyle.top = this._mindtop() - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            childStyle.top = this._calc.initStyle(childStyles.marginTop);
             this._$child.addClass(this.options.className);
             this.fixed = true;
+            this._adjust();
         },
 
         _unfix: function () {

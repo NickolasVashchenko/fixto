@@ -257,7 +257,7 @@ var fixto = (function ($, window, document) {
     // Checks if browser creates a positioning context for fixed elements.
     // Transform rule will create a positioning context on browsers who follow the spec.
     // Ie for example will fix it according to documentElement
-    // TODO: Other css rules also effects. perspective creates at chrome but not in firefox. transform-style preserve3d effects.
+    // TODO: Other css rules also have effect. perspective creates at chrome but not in firefox. transform-style preserved effects.
     function checkFixedPositioningContextSupport() {
         var support = false;
         var parent = document.createElement('div');

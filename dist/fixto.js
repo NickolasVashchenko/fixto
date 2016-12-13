@@ -1,7 +1,5 @@
-/*! fixto - v0.5.0 - 2016-06-16
+/*! fixto - v0.5.0 - 2016-12-13
 * http://github.com/bbarakaci/fixto/*/
-
-
 var fixto = (function ($, window, document) {
 
     // Start Computed Style. Please do not modify this module here. Modify it from its own repo. See address below.
@@ -260,7 +258,7 @@ var fixto = (function ($, window, document) {
     // Checks if browser creates a positioning context for fixed elements.
     // Transform rule will create a positioning context on browsers who follow the spec.
     // Ie for example will fix it according to documentElement
-    // TODO: Other css rules also effects. perspective creates at chrome but not in firefox. transform-style preserve3d effects.
+    // TODO: Other css rules also have effect. perspective creates at chrome but not in firefox. transform-style preserved effects.
     function checkFixedPositioningContextSupport() {
         var support = false;
         var parent = document.createElement('div');
@@ -311,12 +309,13 @@ var fixto = (function ($, window, document) {
 
     FixTo.prototype = {
         // Returns the total outerHeight of the elements passed to mind option. Will return 0 if none.
+        // In case "invert" function is active, this method does not change behaviour, since it accounts
+        // sized of all given object, independently on whether they are on top or on bottom.
         _mindtop: function () {
             var top = 0;
             if(this._$mind) {
                 var el;
                 var rect;
-                var height;
                 for(var i=0, l=this._$mind.length; i<l; i++) {
                     el = this._$mind[i];
                     rect = el.getBoundingClientRect();
@@ -329,7 +328,7 @@ var fixto = (function ($, window, document) {
                     }
                 }
             }
-            return top;
+            return top + this.options.top;
         },
 
         // Public method to stop the behaviour of this instance.
@@ -345,6 +344,7 @@ var fixto = (function ($, window, document) {
             if(!this._running) {
                 this._start();
                 this._running = true;
+
             }
         },
 
@@ -399,6 +399,88 @@ var fixto = (function ($, window, document) {
         }
     };
 
+
+    function DirectCalc (container) {
+        this.c = container;
+    }
+    function InvertedCalc (container) {
+        this.c = container;
+    }
+
+    $.extend(DirectCalc.prototype, {
+        windowLimiter: function () {
+            return document.documentElement.scrollTop || document.body.scrollTop;
+        },
+
+        parentLimiter: function () {
+            var limiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
+            if (this.c.options.mindBottomPadding !== false) { limiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
+            return limiter;
+        },
+
+        isBetween: function (mindTop) {
+            return this.c._windowLimiter < this.c._parentLimiter &&
+              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - mindTop);
+        },
+
+        initStyle: function (mindTop, margin) {
+            return mindTop - computedStyle.toFloat(margin) + 'px';
+        },
+
+        innerTop: function (mindTop, top, childStyles) {
+            var limitingOffset = (this.c._parentLimiter - this.c._windowLimiter) -
+              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
+            if(limitingOffset > 0) { limitingOffset = 0; }
+            return (limitingOffset + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+        },
+
+        isOffScreen: function(mindTop) {
+            return this.c._windowLimiter > this.c._parentLimiter ||
+              this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - mindTop);
+        }
+
+    });
+
+    $.extend(InvertedCalc.prototype, {
+        windowLimiter: function () {
+            return (document.documentElement.scrollTop || document.body.scrollTop) + this.c._viewportHeight;
+        },
+
+        parentLimiter: function () {
+            var limiter = this.c._fullOffset('offsetTop', this.c.parent);
+            if (this.c.options.mindBottomPadding !== false) { limiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
+            return limiter;
+        },
+
+        isBetween: function (mindTop) {
+            var isOut = (this.c._windowLimiter - mindTop < this.c._parentLimiter + this.c.child.offsetHeight ) ||
+              (this._viewportTop() + this.c.child.offsetHeight> this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
+            return !isOut;
+        },
+
+        initStyle: function (mindTop, margin) {
+          return computedStyle.toFloat(margin) + 'px';
+        },
+
+        innerTop: function (mindTop, top, childStyles) {
+            var limitingOffset = this.c._windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
+              this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
+              computedStyle.toFloat(childStyles.marginTop) - mindTop;
+            if(limitingOffset < 0) { limitingOffset = 0; }
+            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - mindTop - top - computedStyle.toFloat(childStyles.marginTop) + 'px';
+        },
+
+        isOffScreen: function(mindTop) {
+            return this._viewportTop()> this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop ||
+              this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent)  + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + mindTop;
+        },
+
+        _viewportTop: function () {
+          return this.c._windowLimiter - this.c._viewportHeight;
+        }
+
+    });
+
     // Class FixToContainer
     function FixToContainer(child, parent, options) {
         FixTo.call(this, child, parent, options);
@@ -431,43 +513,35 @@ var fixto = (function ($, window, document) {
         _toresize : ieversion===8 ? document.documentElement : window,
 
         _onscroll: function _onscroll() {
-            this._scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
-            this._parentBottom = (this.parent.offsetHeight + this._fullOffset('offsetTop', this.parent));
+            var mindTop;
+            this._windowLimiter = this._calc.windowLimiter();
+            this._parentLimiter = this._calc.parentLimiter();
 
-            if (this.options.mindBottomPadding !== false) {
-                this._parentBottom -= computedStyle.getFloat(this.parent, 'paddingBottom');
-            }
+            mindTop = this._mindtop();
 
-            if (!this.fixed && this._shouldFix()) {
-                this._fix();
-                this._adjust();
+            if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
+                this._fix(mindTop);
             } else {
-                if (this._scrollTop > this._parentBottom || this._scrollTop < (this._fullOffset('offsetTop', this._ghostNode) - this.options.top - this._mindtop())) {
+                if (this.fixed && this._calc.isOffScreen(mindTop)) {
                     this._unfix();
                     return;
                 }
-                this._adjust();
+
+                this._adjust(mindTop);
             }
         },
 
-        _shouldFix: function() {
-            if (this._scrollTop < this._parentBottom && this._scrollTop > (this._fullOffset('offsetTop', this.child) - this.options.top - this._mindtop())) {
-                if (this.options.mindViewport && !this._isViewportAvailable()) {
-                    return false;
-                }
-                return true;
-            }
+        _viewportIsBigEnough: function() {
+            return !this.options.mindViewport || this._viewportFreeSpace() >= 0;
         },
 
-        _isViewportAvailable: function() {
-            var childStyles = computedStyle.getAll(this.child);
-            return this._viewportHeight > (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
+        _viewportFreeSpace: function() {
+          var childStyles = computedStyle.getAll(this.child);
+          return this._viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
-        _adjust: function _adjust() {
+        _adjust: function _adjust(mindTop) {
             var top = 0;
-            var mindTop = this._mindtop();
-            var diff = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
 
@@ -480,13 +554,7 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            diff = (this._parentBottom - this._scrollTop) - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop + this.options.top);
-
-            if(diff>0) {
-                diff = 0;
-            }
-
-            this.child.style.top = (diff + mindTop + top + this.options.top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            this.child.style.top = this._calc.innerTop(mindTop, top, childStyles);
         },
 
         // Calculate cumulative offset of the element.
@@ -495,7 +563,7 @@ var fixto = (function ($, window, document) {
             var offset = elm[offsetName];
             var offsetParent = elm.offsetParent;
 
-            // Add offset of the ascendent tree until we reach to the document root or to the given context
+            // Add offset of the ascendant tree until we reach to the document root or to the given context
             while (offsetParent !== null && offsetParent !== context) {
                 offset = offset + offsetParent[offsetName];
                 offsetParent = offsetParent.offsetParent;
@@ -530,7 +598,7 @@ var fixto = (function ($, window, document) {
             return context;
         },
 
-        _fix: function _fix() {
+        _fix: function (mindTop) {
             var child = this.child;
             var childStyle = child.style;
             var childStyles = computedStyle.getAll(child);
@@ -560,12 +628,12 @@ var fixto = (function ($, window, document) {
             childStyle.width = width;
 
             childStyle.position = 'fixed';
-            childStyle.top = this._mindtop() + this.options.top - computedStyle.toFloat(childStyles.marginTop) + 'px';
             this._$child.addClass(this.options.className);
             this.fixed = true;
+            this._adjust(mindTop);
         },
 
-        _unfix: function _unfix() {
+        _unfix: function () {
             var childStyle = this.child.style;
             this._replacer.hide();
             childStyle.position = this._childOriginalPosition;
@@ -602,6 +670,9 @@ var fixto = (function ($, window, document) {
         },
 
         _start: function() {
+            // Setting strategy for calculating position depending on the "invert" option
+            this._calc = this.options.invert ? new InvertedCalc(this) : new DirectCalc(this);
+
             // Trigger onscroll to have the effect immediately.
             this._onscroll();
 
@@ -647,7 +718,7 @@ var fixto = (function ($, window, document) {
         },
 
         refresh: function() {
-            this.child.style.top = this._mindtop() + this.options.top + 'px';
+            this.child.style.top = this._mindtop() + 'px';
         }
     });
 
@@ -674,7 +745,7 @@ var fixto = (function ($, window, document) {
     };
 
     /*
-    No support for ie lt 8
+        No support for ie lt 8
     */
 
     if(ieversion<8){

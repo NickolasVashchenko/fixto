@@ -413,8 +413,7 @@ var fixto = (function ($, window, document) {
 
         parentLimiter: function () {
             var limiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
-            if (this.c.options.mindBottomPadding !== false)
-                limiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom');
+            if (this.c.options.mindBottomPadding !== false) { limiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
             return limiter;
         },
 
@@ -448,15 +447,13 @@ var fixto = (function ($, window, document) {
 
         parentLimiter: function () {
             var limiter = this.c._fullOffset('offsetTop', this.c.parent); // this.c.parent
-            if (this.c.options.mindBottomPadding !== false)
-                limiter += computedStyle.getFloat(this.c.parent, 'paddingTop');
+            if (this.c.options.mindBottomPadding !== false) { limiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
             return limiter;
         },
 
         isBetween: function (mindTop) {
-            var viewportTop = this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
             var isOut = (this.c._windowLimiter - mindTop < this.c._parentLimiter + this.c.child.offsetHeight ) ||
-              (viewportTop > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
+              (this._viewportTop() > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
             return !isOut;
         },
 
@@ -473,11 +470,14 @@ var fixto = (function ($, window, document) {
         },
 
         isOffScreen: function(mindTop) {
-            var viewportTop = this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
-            return viewportTop > (this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop) ||
-              this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + this.c.child.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingTop') + mindTop;
+            return this._viewportTop() > (this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop) ||
+              this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent)  + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + mindTop;
+        },
 
+        _viewportTop: function () {
+          return this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
         }
+
     });
 
     // Class FixToContainer

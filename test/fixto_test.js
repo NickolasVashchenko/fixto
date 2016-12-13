@@ -45,7 +45,8 @@
     setup: function() {
         this.child = $('#child')[0];
         this.parent = $('#parent')[0];
-        this.instance = new window.fixto.FixToContainer(this.child, this.parent, {className:'coolclass', zIndex:5, mind:"#mindy"});
+        this.instance = new window.fixto.FixToContainer(this.child, this.parent,
+          {className: 'coolclass', zIndex: 5, mind: "#mindy", invert: true});
     }
   });
   
@@ -55,6 +56,7 @@
     equal(instance.options.zIndex, 5, 'zIndex option passed');
     equal(instance.child.style.zIndex, "5", 'child has correct zIndex');
     equal(instance.options.mind, '#mindy', 'mind option passed');
+    equal(instance.options.invert, true, 'invert option passed');
     ok(instance._$mind.jquery, '_$mind is a jquery object');
   });
   

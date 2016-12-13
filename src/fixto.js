@@ -470,7 +470,7 @@ var fixto = (function ($, window, document) {
         },
 
         isOffScreen: function(mindTop) {
-            return this._viewportTop() > (this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop) ||
+            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop ||
               this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent)  + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + mindTop;
         },
 

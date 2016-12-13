@@ -19,7 +19,8 @@
 
         .csticky,
         .csticky-do-not-mind-bottom-padding,
-        .csticky-viewport {
+        .csticky-viewport,
+        .csticky-invert {
             background: #97CE68;
             padding: 20px 30px;
         }
@@ -99,6 +100,12 @@
 
                 <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce nulla ligula, egestas sit amet malesuada vel, iaculis at mi. Donec vestibulum nunc at neque pretium et egestas erat scelerisque. Pellentesque hendrerit egestas eros, non mattis arcu viverra vitae. Praesent tincidunt magna at urna ultrices consequat. Phasellus cursus rutrum lectus non dapibus. Curabitur lorem lorem, blandit vitae vehicula eget, sagittis vitae dolor. Integer sed ipsum sed elit facilisis commodo quis a urna. Mauris scelerisque nibh in metus tempor tristique. Fusce commodo sagittis ultrices. Pellentesque sit amet fermentum orci. Maecenas sollicitudin arcu non felis mollis ac laoreet augue mattis. Morbi condimentum turpis eu ipsum dapibus et euismod risus dapibus. Mauris mauris nisl, rutrum eu ultrices vel, cursus at massa. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
             </li>
+            <li class="csticky-holder-invert">
+                <div class="csticky-invert">
+                    Inverted Sticky
+                </div>
+                <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce nulla ligula, egestas sit amet malesuada vel, iaculis at mi. Donec vestibulum nunc at neque pretium et egestas erat scelerisque. Pellentesque hendrerit egestas eros, non mattis arcu viverra vitae. Praesent tincidunt magna at urna ultrices consequat. Phasellus cursus rutrum lectus non dapibus. Curabitur lorem lorem, blandit vitae vehicula eget, sagittis vitae dolor. Integer sed ipsum sed elit facilisis commodo quis a urna. Mauris scelerisque nibh in metus tempor tristique. Fusce commodo sagittis ultrices. Pellentesque sit amet fermentum orci. Maecenas sollicitudin arcu non felis mollis ac laoreet augue mattis. Morbi condimentum turpis eu ipsum dapibus et euismod risus dapibus. Mauris mauris nisl, rutrum eu ultrices vel, cursus at massa. Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
+            </li>
         </ul>
 
     <div style="height:1000px"></div>
@@ -112,9 +119,15 @@
     });
 
     $('.csticky-do-not-mind-bottom-padding').fixTo('.csticky-holder-do-not-mind-bottom-padding', {
-        top: 0,
-        mindBottomPadding: false,
-        useNativeSticky: false
+      top: 0,
+      mindBottomPadding: false,
+      useNativeSticky: false
+    });
+
+    $('.csticky-invert').fixTo('.csticky-holder-invert', {
+      top: 0,
+      useNativeSticky: false,
+      invert: true
     });
 
 </script>

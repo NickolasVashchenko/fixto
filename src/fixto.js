@@ -446,7 +446,7 @@ var fixto = (function ($, window, document) {
         },
 
         parentLimiter: function () {
-            var limiter = this.c._fullOffset('offsetTop', this.c.parent); // this.c.parent
+            var limiter = this.c._fullOffset('offsetTop', this.c.parent);
             if (this.c.options.mindBottomPadding !== false) { limiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
             return limiter;
         },
@@ -512,10 +512,11 @@ var fixto = (function ($, window, document) {
         _toresize : ieversion===8 ? document.documentElement : window,
 
         _onscroll: function _onscroll() {
-
-            var mindTop = this._mindtop();
+            var mindTop;
             this._windowLimiter = this._calc.windowLimiter();
             this._parentLimiter = this._calc.parentLimiter();
+
+            mindTop = this._mindtop();
 
             if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
                 this._fix(mindTop);

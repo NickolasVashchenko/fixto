@@ -453,7 +453,7 @@ var fixto = (function ($, window, document) {
 
         isBetween: function (mindTop) {
             var isOut = (this.c._windowLimiter - mindTop < this.c._parentLimiter + this.c.child.offsetHeight ) ||
-              (this._viewportTop() > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
+              (this._viewportTop() + this.c.child.offsetHeight> this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
             return !isOut;
         },
 
@@ -470,12 +470,12 @@ var fixto = (function ($, window, document) {
         },
 
         isOffScreen: function(mindTop) {
-            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop ||
+            return this._viewportTop()> this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop ||
               this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent)  + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + mindTop;
         },
 
         _viewportTop: function () {
-          return this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
+          return this.c._windowLimiter - this.c._viewportHeight;
         }
 
     });

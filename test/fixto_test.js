@@ -73,7 +73,6 @@
     instance._onscroll();
     equal(instance._windowLimiter, 0, 'scrolltop set');
     equal(instance._parentLimiter, -9975,'paddingBottom set');
-    
   });
   
   test('adjust', function() {
@@ -114,6 +113,20 @@
     var instance = this.instance;
     var top = instance._mindtop();
     equal(top, 25, 'calculating mindtop properly');
+  });
+
+  module('invert', {
+    setup: function() {
+      this.child = $('#child')[0];
+      this.parent = $('#parent')[0];
+      this.instance = new window.fixto.FixToContainer(this.child, this.parent, {invert: true});
+    }
+  });
+
+  test('onscroll invert', function() {
+    var instance = this.instance;
+    instance._onscroll();
+    equal(instance._windowLimiter, 300, 'scrolltop set');
   });
   
   module('expose', {

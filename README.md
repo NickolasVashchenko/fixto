@@ -116,6 +116,9 @@ Allows for scrolling through the parent's bottom padding. Defaults to `true`, ma
 ### mindViewport (Boolean)
 If set to true, the viewport height will be taken into consideration. If viewport height is shorter than the sticky element, it will not stick not to render any content inaccesible. This option won't work with native position sticky.
 
+### invert (Boolean)
+If set to true, binds the element to the bottom of the viewport instead of top. Also inverts interpretation of options *top* and *mind*. This option won't work with native position sticky.
+
 ## Public Methods
 
 Following methods can be called directly on the instance or with jQuery.

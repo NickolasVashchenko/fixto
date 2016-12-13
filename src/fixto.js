@@ -301,8 +301,7 @@ var fixto = (function ($, window, document) {
         this.options = {
             className: 'fixto-fixed',
             top: 0,
-            mindViewport: false,
-            invert: false
+            mindViewport: false
         };
         this._setOptions(options);
     }
@@ -428,12 +427,14 @@ var fixto = (function ($, window, document) {
             return mindTop - computedStyle.toFloat(margin) + 'px';
         },
 
-        innerDiff: function (mindTop, childStyles) {
-            return (this.c._parentLimiter - this.c._windowLimiter) -
+        innerTop: function (mindTop, top, childStyles) {
+            var limitingOffset = (this.c._parentLimiter - this.c._windowLimiter) -
               (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
+            if(limitingOffset > 0) { limitingOffset = 0; }
+            return (limitingOffset + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
-        isAway: function(mindTop) {
+        isOffScreen: function(mindTop) {
             return this.c._windowLimiter > this.c._parentLimiter ||
               this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - mindTop);
         }
@@ -446,29 +447,36 @@ var fixto = (function ($, window, document) {
         },
 
         parentLimiter: function () {
-            var limiter = this.c.parent.offsetHeight;
+            var limiter = this.c._fullOffset('offsetTop', this.c.parent); // this.c.parent
             if (this.c.options.mindBottomPadding !== false)
                 limiter += computedStyle.getFloat(this.c.parent, 'paddingTop');
             return limiter;
         },
 
         isBetween: function (mindTop) {
-            return this.c._windowLimiter < this.c._parentLimiter &&
-            this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.child) + this.c.child.offsetHeight + mindTop);
+            var viewportTop = this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
+            var isOut = (this.c._windowLimiter - mindTop < this.c._parentLimiter + this.c.child.offsetHeight ) ||
+              (viewportTop > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
+            return !isOut;
         },
 
         initStyle: function (mindTop, margin) {
           return computedStyle.toFloat(margin) + 'px';
         },
 
-        innerDiff: function (mindTop, childStyles) {
-            return (this.c._windowLimiter - this.c._parentLimiter) -
-              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + mindTop);
+        innerTop: function (mindTop, top, childStyles) {
+            var limitingOffset = this.c._windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
+              this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
+              computedStyle.toFloat(childStyles.marginTop) - mindTop;
+            if(limitingOffset < 0) { limitingOffset = 0; }
+            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - mindTop - top - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
-        isAway: function() {
-            return this.c._windowLimiter < this.c._parentLimiter ||
-              this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) + this.c.child.offsetHeight + mindTop);
+        isOffScreen: function(mindTop) {
+            var viewportTop = this.c._windowLimiter - this.c._viewportHeight + this.c.child.offsetHeight;
+            return viewportTop > (this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + mindTop) ||
+              this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + this.c.child.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingTop') + mindTop;
+
         }
     });
 
@@ -512,10 +520,11 @@ var fixto = (function ($, window, document) {
             if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
                 this._fix(mindTop);
             } else {
-                if (this.fixed && this._calc.isAway(mindTop)) {
+                if (this.fixed && this._calc.isOffScreen(mindTop)) {
                     this._unfix();
                     return;
                 }
+
                 this._adjust(mindTop);
             }
         },
@@ -531,7 +540,6 @@ var fixto = (function ($, window, document) {
 
         _adjust: function _adjust(mindTop) {
             var top = 0;
-            var inner_diff = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
 
@@ -544,11 +552,7 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            inner_diff = this._calc.innerDiff(mindTop, childStyles);
-
-            if(inner_diff > 0) { inner_diff = 0; }
-
-            this.child.style.top = (inner_diff + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            this.child.style.top = this._calc.innerTop(mindTop, top, childStyles);
         },
 
         // Calculate cumulative offset of the element.
@@ -622,7 +626,6 @@ var fixto = (function ($, window, document) {
             childStyle.width = width;
 
             childStyle.position = 'fixed';
-            childStyle.top = this._calc.initStyle(mindTop, childStyles.marginTop);
             this._$child.addClass(this.options.className);
             this.fixed = true;
             this._adjust(mindTop);

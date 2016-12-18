@@ -400,9 +400,7 @@ var fixto = (function ($, window, document) {
         }
     };
 
-    function CalcStrategy (container) {
-      this.c = container;
-    }
+    function CalcStrategy () {}
 
     function DirectCalc (container) {
         this.c = container;
@@ -460,7 +458,7 @@ var fixto = (function ($, window, document) {
 
         isOffScreen: function() {
             return this.windowLimiter > this.parentLimiter ||
-              this.windowLimiter < (this._fullOffset('offsetTop', this.c._ghostNode) - this.offsetInViewport);
+              this.windowLimiter < (this._fullOffset('offsetTop', this.c.ghostNode) - this.offsetInViewport);
         }
 
     });
@@ -471,7 +469,7 @@ var fixto = (function ($, window, document) {
             this.parentLimiter = this._fullOffset('offsetTop', this.c.parent);
             if (this.c.options.mindBottomPadding !== false)
                 { this.parentLimiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
-            this.windowLimiter = this._viewportTop() + this.c._viewportHeight;
+            this.windowLimiter = this._viewportTop() + this.c.viewportHeight;
         },
 
         isBetween: function () {
@@ -485,7 +483,7 @@ var fixto = (function ($, window, document) {
               this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
               computedStyle.toFloat(childStyles.marginTop) - this.offsetInViewport;
             if(limitingOffset < 0) { limitingOffset = 0; }
-            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - this.offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            return this.c.viewportHeight - this.c.child.offsetHeight - limitingOffset - this.offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         isOffScreen: function() {
@@ -499,7 +497,7 @@ var fixto = (function ($, window, document) {
     function FixToContainer(child, parent, options) {
         FixTo.call(this, child, parent, options);
         this._replacer = new mimicNode.MimicNode(child);
-        this._ghostNode = this._replacer.replacer;
+        this.ghostNode = this._replacer.replacer;
 
         this._saveStyles();
 
@@ -546,7 +544,7 @@ var fixto = (function ($, window, document) {
 
         _viewportFreeSpace: function() {
           var childStyles = computedStyle.getAll(this.child);
-          return this._viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
+          return this.viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
         _adjust: function () {
@@ -652,7 +650,7 @@ var fixto = (function ($, window, document) {
 
         _saveViewportHeight: function () {
             // ie8 doesn't support innerHeight
-            this._viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+            this.viewportHeight = window.innerHeight || document.documentElement.clientHeight;
         },
 
         _stop: function() {

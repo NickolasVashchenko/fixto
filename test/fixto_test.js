@@ -72,7 +72,7 @@
     var instance = this.instance;
     instance._onscroll();
     equal(instance._calc.windowLimiter, 0, 'scrolltop set');
-    equal(instance._calc.parentLimiter, -9975,'paddingBottom set');
+    equal(instance._calc.parentBottomLimiter, -9975, 'paddingBottom set');
   });
   
   test('adjust', function() {
@@ -126,7 +126,7 @@
   test('onscroll invert', function() {
     var instance = this.instance;
     instance._onscroll();
-    equal(instance._calc.windowLimiter, 300, 'scrolltop set');
+    equal(instance.child.style.top, '-9975px', 'scrolltop set');
   });
   
   module('expose', {

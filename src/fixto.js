@@ -312,7 +312,7 @@ var fixto = (function ($, window, document) {
         // Will return 0, if none is provided.
         // In case "invert" option is true, this method does not change behaviour, since it just accounts
         // sized of all given objects, independently on whether they are on top or on bottom.
-        _mindtop: function () {
+        _offsetInViewport: function () {
             var top = 0;
             if(this._$mind) {
                 var el;
@@ -506,11 +506,10 @@ var fixto = (function ($, window, document) {
         _toresize : ieversion===8 ? document.documentElement : window,
 
         _onscroll: function _onscroll() {
-            var mindTop;
             this._windowLimiter = this._calc.windowLimiter();
             this._parentLimiter = this._calc.parentLimiter();
 
-            mindTop = this._mindtop();
+            var mindTop = this._offsetInViewport();
 
             if (!this.fixed && this._calc.isBetween(mindTop) && this._viewportIsBigEnough()) {
                 this._fix(mindTop);
@@ -711,7 +710,7 @@ var fixto = (function ($, window, document) {
         },
 
         refresh: function() {
-            this.child.style.top = this._mindtop() + 'px';
+            this.child.style.top = this._offsetInViewport() + 'px';
         }
     });
 

@@ -109,10 +109,10 @@
     }
   });
   
-  test('_mindtop', function() {
+  test('_offsetInViewport', function() {
     var instance = this.instance;
-    var top = instance._mindtop();
-    equal(top, 25, 'calculating mindtop properly');
+    var top = instance._offsetInViewport();
+    equal(top, 25, 'calculating properly offset in viewport');
   });
 
   module('invert', {

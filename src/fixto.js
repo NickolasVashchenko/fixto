@@ -431,7 +431,7 @@ var fixto = (function ($, window, document) {
 
         _viewportTop: function () {
             return document.documentElement.scrollTop || document.body.scrollTop;
-        },
+        }
     });
 
     $.extend(DirectCalc.prototype, {
@@ -473,9 +473,8 @@ var fixto = (function ($, window, document) {
         },
 
         isBetween: function () {
-            var isOut = (this.windowLimiter - this.offsetInViewport < this.parentLimiter + this.c.child.offsetHeight ) ||
-              (this._viewportTop() + this.c.child.offsetHeight > this._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + this.offsetInViewport);
-            return !isOut;
+            return (this.windowLimiter - this.offsetInViewport > this.parentLimiter + this.c.child.offsetHeight) &&
+              (this._viewportTop() - this.offsetInViewport < this._fullOffset('offsetTop', this.c.parent) + this.c.parent.offsetHeight);
         },
 
         innerTop: function (contextTop, childStyles) {

@@ -429,6 +429,10 @@ var fixto = (function ($, window, document) {
                 offsetParent = offsetParent.offsetParent;
             }
             return offset;
+        },
+
+        _viewportTop: function () {
+            return document.documentElement.scrollTop || document.body.scrollTop;
         }
     });
 
@@ -439,7 +443,7 @@ var fixto = (function ($, window, document) {
           this.parentLimiter = this.c.parent.offsetHeight + this.fullOffset('offsetTop', this.c.parent);
           if (this.c.options.mindBottomPadding !== false)
             { this.parentLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
-          this.windowLimiter = document.documentElement.scrollTop || document.body.scrollTop;
+          this.windowLimiter = this._viewportTop();
         },
 
         isBetween: function () {
@@ -487,10 +491,6 @@ var fixto = (function ($, window, document) {
         isOffScreen: function() {
             return this._viewportTop() > this.fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + this.offsetInViewport ||
               this.windowLimiter < this.fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + this.offsetInViewport;
-        },
-
-        _viewportTop: function () {
-            return document.documentElement.scrollTop || document.body.scrollTop;
         }
 
     });

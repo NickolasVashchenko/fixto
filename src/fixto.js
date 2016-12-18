@@ -400,13 +400,37 @@ var fixto = (function ($, window, document) {
         }
     };
 
+    function CalcStrategy (container) {
+      this.c = container;
+    }
 
     function DirectCalc (container) {
         this.c = container;
     }
+
+    DirectCalc.prototype = new CalcStrategy();
+
     function InvertedCalc (container) {
         this.c = container;
     }
+
+    InvertedCalc.prototype = new CalcStrategy();
+
+    $.extend(CalcStrategy.prototype, {
+        // Calculate cumulative offset of the element.
+        // Optionally according to context
+        fullOffset: function (offsetName, elm, context) {
+            var offset = elm[offsetName];
+            var offsetParent = elm.offsetParent;
+
+            // Add offset of the ascendant tree until we reach to the document root or to the given context
+            while (offsetParent !== null && offsetParent !== context) {
+                offset = offset + offsetParent[offsetName];
+                offsetParent = offsetParent.offsetParent;
+            }
+            return offset;
+        }
+    });
 
     $.extend(DirectCalc.prototype, {
 
@@ -433,21 +457,6 @@ var fixto = (function ($, window, document) {
         isOffScreen: function() {
             return this.windowLimiter > this.parentLimiter ||
               this.windowLimiter < (this.fullOffset('offsetTop', this.c._ghostNode) - this.offsetInViewport);
-        },
-
-        // Calculate cumulative offset of the element.
-        // Optionally according to context
-        fullOffset: function (offsetName, elm, context) {
-          var offset = elm[offsetName];
-          var offsetParent = elm.offsetParent;
-
-          // Add offset of the ascendant tree until we reach to the document root or to the given context
-          while (offsetParent !== null && offsetParent !== context) {
-            offset = offset + offsetParent[offsetName];
-            offsetParent = offsetParent.offsetParent;
-          }
-
-          return offset;
         }
 
     });
@@ -482,21 +491,6 @@ var fixto = (function ($, window, document) {
 
         _viewportTop: function () {
             return document.documentElement.scrollTop || document.body.scrollTop;
-        },
-
-        // Calculate cumulative offset of the element.
-        // Optionally according to context
-        fullOffset: function (offsetName, elm, context) {
-          var offset = elm[offsetName];
-          var offsetParent = elm.offsetParent;
-
-          // Add offset of the ascendant tree until we reach to the document root or to the given context
-          while (offsetParent !== null && offsetParent !== context) {
-            offset = offset + offsetParent[offsetName];
-            offsetParent = offsetParent.offsetParent;
-          }
-
-          return offset;
         }
 
     });

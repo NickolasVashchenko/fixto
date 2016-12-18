@@ -438,27 +438,28 @@ var fixto = (function ($, window, document) {
 
         refreshEnvironment: function (offsetInViewport) {
           this.offsetInViewport = offsetInViewport;
-          this.parentLimiter = this.c.parent.offsetHeight + this._fullOffset('offsetTop', this.c.parent);
+          this.parentBottomLimiter = this.c.parent.offsetHeight + this._fullOffset('offsetTop', this.c.parent);
           if (this.c.options.mindBottomPadding !== false)
-            { this.parentLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
+            { this.parentBottomLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
           this.windowLimiter = this._viewportTop();
+          this.placeToFix = this.windowLimiter + this.offsetInViewport;
         },
 
         isBetween: function () {
-            return this.windowLimiter < this.parentLimiter &&
-              this.windowLimiter > (this._fullOffset('offsetTop', this.c.child) - this.offsetInViewport);
+            return this.windowLimiter < this.parentBottomLimiter &&
+              this.placeToFix > this._fullOffset('offsetTop', this.c.child);
         },
 
         innerTop: function (contextTop, childStyles) {
-            var limitingOffset = (this.parentLimiter - this.windowLimiter) -
-              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + this.offsetInViewport);
+            var limitingOffset = this.parentBottomLimiter - this.placeToFix -
+              this.c.child.offsetHeight - computedStyle.toFloat(childStyles.marginBottom);
             if(limitingOffset > 0) { limitingOffset = 0; }
             return limitingOffset + this.offsetInViewport + contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         isOffScreen: function() {
-            return this.windowLimiter > this.parentLimiter ||
-              this.windowLimiter < (this._fullOffset('offsetTop', this.c.ghostNode) - this.offsetInViewport);
+            return this.windowLimiter > this.parentBottomLimiter ||
+              this.placeToFix < this._fullOffset('offsetTop', this.c.ghostNode);
         }
 
     });
@@ -466,28 +467,27 @@ var fixto = (function ($, window, document) {
     $.extend(InvertedCalc.prototype, {
         refreshEnvironment: function (offsetInViewport) {
             this.offsetInViewport = offsetInViewport;
-            this.parentLimiter = this._fullOffset('offsetTop', this.c.parent);
+            this.parentTopLimiter = this._fullOffset('offsetTop', this.c.parent);
+            this.placeToFix = this._viewportTop() + this.c.viewportHeight - this.offsetInViewport;
+            this.parentBottomLimiter = this.parentTopLimiter + this.c.parent.offsetHeight;
             if (this.c.options.mindBottomPadding !== false)
-                { this.parentLimiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
-            this.windowLimiter = this._viewportTop() + this.c.viewportHeight;
+                { this.parentBottomLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
         },
 
         isBetween: function () {
-            return (this.windowLimiter - this.offsetInViewport > this.parentLimiter + this.c.child.offsetHeight) &&
-              (this._viewportTop() - this.offsetInViewport < this._fullOffset('offsetTop', this.c.parent) + this.c.parent.offsetHeight);
+            return (this.placeToFix > this.parentTopLimiter + this.c.child.offsetHeight) &&
+              (this._viewportTop() - this.offsetInViewport < this.parentBottomLimiter);
         },
 
         innerTop: function (contextTop, childStyles) {
-            var limitingOffset = this.windowLimiter - this._fullOffset('offsetTop', this.c.parent) -
-              this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
-              computedStyle.toFloat(childStyles.marginTop) - this.offsetInViewport;
-            if(limitingOffset < 0) { limitingOffset = 0; }
-            return this.c.viewportHeight - this.c.child.offsetHeight - limitingOffset - this.offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            var neutralizingOffset = this.placeToFix - this.parentBottomLimiter;
+            if(neutralizingOffset < 0) { neutralizingOffset = 0; }
+            return this.c.viewportHeight - this.c.child.offsetHeight - neutralizingOffset - this.offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         isOffScreen: function() {
-            return this._viewportTop() > this._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + this.offsetInViewport ||
-              this.windowLimiter < this._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + this.offsetInViewport;
+            return this._viewportTop() - this.offsetInViewport > this.parentBottomLimiter + computedStyle.getFloat(this.c.parent, 'paddingTop')  ||
+              this.placeToFix - this.c.child.offsetHeight < this.parentTopLimiter;
         }
 
     });

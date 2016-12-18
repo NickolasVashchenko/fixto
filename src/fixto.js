@@ -257,7 +257,7 @@ var fixto = (function ($, window, document) {
     // Checks if browser creates a positioning context for fixed elements.
     // Transform rule will create a positioning context on browsers who follow the spec.
     // Ie for example will fix it according to documentElement
-    // TODO: Other css rules also have effect. perspective creates at chrome but not in firefox. transform-style preserved effects.
+    // TODO: Other css rules also have effect. perspective creates at chrome but not in firefox. transform-style preserve3d effects.
     function checkFixedPositioningContextSupport() {
         var support = false;
         var parent = document.createElement('div');
@@ -307,9 +307,11 @@ var fixto = (function ($, window, document) {
     }
 
     FixTo.prototype = {
-        // Returns the total outerHeight of the elements passed to mind option. Will return 0 if none.
-        // In case "invert" function is active, this method does not change behaviour, since it accounts
-        // sized of all given object, independently on whether they are on top or on bottom.
+        // Returns the calculated viewport offset for sticky element, which consists of
+        // total outerHeight of all the elements passed to "mind" option and the fixed part supplied in "top" option.
+        // Will return 0, if none is provided.
+        // In case "invert" option is true, this method does not change behaviour, since it just accounts
+        // sized of all given objects, independently on whether they are on top or on bottom.
         _mindtop: function () {
             var top = 0;
             if(this._$mind) {
@@ -422,10 +424,6 @@ var fixto = (function ($, window, document) {
               this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - mindTop);
         },
 
-        initStyle: function (mindTop, margin) {
-            return mindTop - computedStyle.toFloat(margin) + 'px';
-        },
-
         innerTop: function (mindTop, top, childStyles) {
             var limitingOffset = (this.c._parentLimiter - this.c._windowLimiter) -
               (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
@@ -455,10 +453,6 @@ var fixto = (function ($, window, document) {
             var isOut = (this.c._windowLimiter - mindTop < this.c._parentLimiter + this.c.child.offsetHeight ) ||
               (this._viewportTop() + this.c.child.offsetHeight> this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + mindTop);
             return !isOut;
-        },
-
-        initStyle: function (mindTop, margin) {
-          return computedStyle.toFloat(margin) + 'px';
         },
 
         innerTop: function (mindTop, top, childStyles) {

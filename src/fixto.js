@@ -424,11 +424,11 @@ var fixto = (function ($, window, document) {
               this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - mindTop);
         },
 
-        innerTop: function (mindTop, top, childStyles) {
+        innerTop: function (mindTop, context_top, childStyles) {
             var limitingOffset = (this.c._parentLimiter - this.c._windowLimiter) -
               (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + mindTop);
             if(limitingOffset > 0) { limitingOffset = 0; }
-            return (limitingOffset + mindTop + top) - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            return limitingOffset + mindTop + context_top - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         isOffScreen: function(mindTop) {
@@ -455,12 +455,12 @@ var fixto = (function ($, window, document) {
             return !isOut;
         },
 
-        innerTop: function (mindTop, top, childStyles) {
+        innerTop: function (mindTop, context_top, childStyles) {
             var limitingOffset = this.c._windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
               this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
               computedStyle.toFloat(childStyles.marginTop) - mindTop;
             if(limitingOffset < 0) { limitingOffset = 0; }
-            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - mindTop - top - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - mindTop - context_top - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
         isOffScreen: function(mindTop) {
@@ -534,7 +534,7 @@ var fixto = (function ($, window, document) {
         },
 
         _adjust: function _adjust(mindTop) {
-            var top = 0;
+            var context_top = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
 
@@ -543,11 +543,11 @@ var fixto = (function ($, window, document) {
                 context = this._getContext();
                 if(context) {
                     // There is a positioning context. Top should be according to the context.
-                    top = Math.abs(context.getBoundingClientRect().top);
+                    context_top = Math.abs(context.getBoundingClientRect().top);
                 }
             }
 
-            this.child.style.top = this._calc.innerTop(mindTop, top, childStyles);
+            this.child.style.top = this._calc.innerTop(mindTop, context_top, childStyles);
         },
 
         // Calculate cumulative offset of the element.

@@ -412,7 +412,7 @@ var fixto = (function ($, window, document) {
 
         refreshEnvironment: function (offsetInViewport) {
           this.offsetInViewport = offsetInViewport;
-          this.parentLimiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
+          this.parentLimiter = this.c.parent.offsetHeight + this.fullOffset('offsetTop', this.c.parent);
           if (this.c.options.mindBottomPadding !== false)
             { this.parentLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
           this.windowLimiter = document.documentElement.scrollTop || document.body.scrollTop;
@@ -420,7 +420,7 @@ var fixto = (function ($, window, document) {
 
         isBetween: function () {
             return this.windowLimiter < this.parentLimiter &&
-              this.windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - this.offsetInViewport);
+              this.windowLimiter > (this.fullOffset('offsetTop', this.c.child) - this.offsetInViewport);
         },
 
         innerTop: function (contextTop, childStyles) {
@@ -432,7 +432,22 @@ var fixto = (function ($, window, document) {
 
         isOffScreen: function() {
             return this.windowLimiter > this.parentLimiter ||
-              this.windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - this.offsetInViewport);
+              this.windowLimiter < (this.fullOffset('offsetTop', this.c._ghostNode) - this.offsetInViewport);
+        },
+
+        // Calculate cumulative offset of the element.
+        // Optionally according to context
+        fullOffset: function (offsetName, elm, context) {
+          var offset = elm[offsetName];
+          var offsetParent = elm.offsetParent;
+
+          // Add offset of the ascendant tree until we reach to the document root or to the given context
+          while (offsetParent !== null && offsetParent !== context) {
+            offset = offset + offsetParent[offsetName];
+            offsetParent = offsetParent.offsetParent;
+          }
+
+          return offset;
         }
 
     });
@@ -440,7 +455,7 @@ var fixto = (function ($, window, document) {
     $.extend(InvertedCalc.prototype, {
         refreshEnvironment: function (offsetInViewport) {
             this.offsetInViewport = offsetInViewport;
-            this.parentLimiter = this.c._fullOffset('offsetTop', this.c.parent);
+            this.parentLimiter = this.fullOffset('offsetTop', this.c.parent);
             if (this.c.options.mindBottomPadding !== false)
                 { this.parentLimiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
             this.windowLimiter = this._viewportTop() + this.c._viewportHeight;
@@ -448,12 +463,12 @@ var fixto = (function ($, window, document) {
 
         isBetween: function () {
             var isOut = (this.windowLimiter - this.offsetInViewport < this.parentLimiter + this.c.child.offsetHeight ) ||
-              (this._viewportTop() + this.c.child.offsetHeight > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + this.offsetInViewport);
+              (this._viewportTop() + this.c.child.offsetHeight > this.fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + this.offsetInViewport);
             return !isOut;
         },
 
         innerTop: function (contextTop, childStyles) {
-            var limitingOffset = this.windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
+            var limitingOffset = this.windowLimiter - this.fullOffset('offsetTop', this.c.parent) -
               this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
               computedStyle.toFloat(childStyles.marginTop) - this.offsetInViewport;
             if(limitingOffset < 0) { limitingOffset = 0; }
@@ -461,12 +476,27 @@ var fixto = (function ($, window, document) {
         },
 
         isOffScreen: function() {
-            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + this.offsetInViewport ||
-              this.windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + this.offsetInViewport;
+            return this._viewportTop() > this.fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + this.offsetInViewport ||
+              this.windowLimiter < this.fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + this.offsetInViewport;
         },
 
         _viewportTop: function () {
             return document.documentElement.scrollTop || document.body.scrollTop;
+        },
+
+        // Calculate cumulative offset of the element.
+        // Optionally according to context
+        fullOffset: function (offsetName, elm, context) {
+          var offset = elm[offsetName];
+          var offsetParent = elm.offsetParent;
+
+          // Add offset of the ascendant tree until we reach to the document root or to the given context
+          while (offsetParent !== null && offsetParent !== context) {
+            offset = offset + offsetParent[offsetName];
+            offsetParent = offsetParent.offsetParent;
+          }
+
+          return offset;
         }
 
     });
@@ -542,24 +572,9 @@ var fixto = (function ($, window, document) {
             this.child.style.top = this._calc.innerTop(contextTop, childStyles);
         },
 
-        // Calculate cumulative offset of the element.
-        // Optionally according to context
-        _fullOffset: function _fullOffset(offsetName, elm, context) {
-            var offset = elm[offsetName];
-            var offsetParent = elm.offsetParent;
-
-            // Add offset of the ascendant tree until we reach to the document root or to the given context
-            while (offsetParent !== null && offsetParent !== context) {
-                offset = offset + offsetParent[offsetName];
-                offsetParent = offsetParent.offsetParent;
-            }
-
-            return offset;
-        },
-
         // Get positioning context of the element.
         // We know that the closest parent that a transform rule applied will create a positioning context.
-        _getContext: function() {
+        _getContext: function () {
             var parent;
             var element = this.child;
             var context = null;

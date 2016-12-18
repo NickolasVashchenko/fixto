@@ -36,7 +36,7 @@
     equal(instance.parent, this.parent, 'correct parent');
     ok(instance._replacer instanceof window.fixto.mimicNode.MimicNode, 'replacer instance of mimic node');
     equal(instance.options.className, 'fixto-fixed', 'default class name');
-    equal(instance._ghostNode, instance._replacer.replacer);
+    equal(instance.ghostNode, instance._replacer.replacer);
     equal(instance._toresize, window || document.documentElement, 'element to resize set');
     equal(instance._childOriginalPosition, '', 'saved style');
   });
@@ -71,8 +71,8 @@
   test('onscroll', function() {
     var instance = this.instance;
     instance._onscroll();
-    equal(instance._windowLimiter, 0, 'scrolltop set');
-    equal(instance._parentLimiter, -9975,'paddingBottom set');
+    equal(instance._calc.windowLimiter, 0, 'scrolltop set');
+    equal(instance._calc.parentLimiter, -9975,'paddingBottom set');
   });
   
   test('adjust', function() {
@@ -84,7 +84,7 @@
 
   test('fulloffset', function() {
     var instance = this.instance;
-    equal(instance._fullOffset('offsetTop', this.child), -9975);
+    equal(instance._calc._fullOffset('offsetTop', this.child), -9975);
   });
   
   test('fix unfix', function() {
@@ -126,7 +126,7 @@
   test('onscroll invert', function() {
     var instance = this.instance;
     instance._onscroll();
-    equal(instance._windowLimiter, 300, 'scrolltop set');
+    equal(instance._calc.windowLimiter, 300, 'scrolltop set');
   });
   
   module('expose', {

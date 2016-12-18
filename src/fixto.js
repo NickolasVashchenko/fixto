@@ -451,7 +451,7 @@ var fixto = (function ($, window, document) {
 
         isBetween: function (offsetInViewport) {
             var isOut = (this.c._windowLimiter - offsetInViewport < this.c._parentLimiter + this.c.child.offsetHeight ) ||
-              (this._viewportTop() + this.c.child.offsetHeight> this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + offsetInViewport);
+              (this._viewportTop() + this.c.child.offsetHeight > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + offsetInViewport);
             return !isOut;
         },
 
@@ -464,7 +464,7 @@ var fixto = (function ($, window, document) {
         },
 
         isOffScreen: function(offsetInViewport) {
-            return this._viewportTop()> this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + offsetInViewport ||
+            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + offsetInViewport ||
               this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + offsetInViewport;
         },
 
@@ -509,7 +509,7 @@ var fixto = (function ($, window, document) {
             this._windowLimiter = this._calc.windowLimiter();
             this._parentLimiter = this._calc.parentLimiter();
 
-            var  offsetInViewport = this._offsetInViewport();
+            var offsetInViewport = this._offsetInViewport();
 
             if (!this.fixed && this._calc.isBetween(offsetInViewport) && this._viewportIsBigEnough()) {
                 this._fix(offsetInViewport);

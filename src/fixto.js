@@ -409,63 +409,60 @@ var fixto = (function ($, window, document) {
     }
 
     $.extend(DirectCalc.prototype, {
-        windowLimiter: function () {
-            return document.documentElement.scrollTop || document.body.scrollTop;
+
+        refreshEnvironment: function (offsetInViewport) {
+          this.offsetInViewport = offsetInViewport;
+          this.parentLimiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
+          if (this.c.options.mindBottomPadding !== false)
+            { this.parentLimiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
+          this.windowLimiter = document.documentElement.scrollTop || document.body.scrollTop;
         },
 
-        parentLimiter: function () {
-            var limiter = this.c.parent.offsetHeight + this.c._fullOffset('offsetTop', this.c.parent);
-            if (this.c.options.mindBottomPadding !== false) { limiter -= computedStyle.getFloat(this.c.parent, 'paddingBottom'); }
-            return limiter;
+        isBetween: function () {
+            return this.windowLimiter < this.parentLimiter &&
+              this.windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - this.offsetInViewport);
         },
 
-        isBetween: function (offsetInViewport) {
-            return this.c._windowLimiter < this.c._parentLimiter &&
-              this.c._windowLimiter > (this.c._fullOffset('offsetTop', this.c.child) - offsetInViewport);
-        },
-
-        innerTop: function (offsetInViewport, contextTop, childStyles) {
-            var limitingOffset = (this.c._parentLimiter - this.c._windowLimiter) -
-              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + offsetInViewport);
+        innerTop: function (contextTop, childStyles) {
+            var limitingOffset = (this.parentLimiter - this.windowLimiter) -
+              (this.c.child.offsetHeight + computedStyle.toFloat(childStyles.marginBottom) + this.offsetInViewport);
             if(limitingOffset > 0) { limitingOffset = 0; }
-            return limitingOffset + offsetInViewport + contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            return limitingOffset + this.offsetInViewport + contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
-        isOffScreen: function(offsetInViewport) {
-            return this.c._windowLimiter > this.c._parentLimiter ||
-              this.c._windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - offsetInViewport);
+        isOffScreen: function() {
+            return this.windowLimiter > this.parentLimiter ||
+              this.windowLimiter < (this.c._fullOffset('offsetTop', this.c._ghostNode) - this.offsetInViewport);
         }
 
     });
 
     $.extend(InvertedCalc.prototype, {
-        windowLimiter: function () {
-            return this._viewportTop() + this.c._viewportHeight;
+        refreshEnvironment: function (offsetInViewport) {
+            this.offsetInViewport = offsetInViewport;
+            this.parentLimiter = this.c._fullOffset('offsetTop', this.c.parent);
+            if (this.c.options.mindBottomPadding !== false)
+                { this.parentLimiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
+            this.windowLimiter = this._viewportTop() + this.c._viewportHeight;
         },
 
-        parentLimiter: function () {
-            var limiter = this.c._fullOffset('offsetTop', this.c.parent);
-            if (this.c.options.mindBottomPadding !== false) { limiter += computedStyle.getFloat(this.c.parent, 'paddingTop'); }
-            return limiter;
-        },
-
-        isBetween: function (offsetInViewport) {
-            var isOut = (this.c._windowLimiter - offsetInViewport < this.c._parentLimiter + this.c.child.offsetHeight ) ||
-              (this._viewportTop() + this.c.child.offsetHeight > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + offsetInViewport);
+        isBetween: function () {
+            var isOut = (this.windowLimiter - this.offsetInViewport < this.parentLimiter + this.c.child.offsetHeight ) ||
+              (this._viewportTop() + this.c.child.offsetHeight > this.c._fullOffset('offsetTop', this.c.child) + this.c.parent.offsetHeight + this.offsetInViewport);
             return !isOut;
         },
 
-        innerTop: function (offsetInViewport, contextTop, childStyles) {
-            var limitingOffset = this.c._windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
+        innerTop: function (contextTop, childStyles) {
+            var limitingOffset = this.windowLimiter - this.c._fullOffset('offsetTop', this.c.parent) -
               this.c.parent.offsetHeight + computedStyle.getFloat(this.c.parent, 'paddingBottom') -
-              computedStyle.toFloat(childStyles.marginTop) - offsetInViewport;
+              computedStyle.toFloat(childStyles.marginTop) - this.offsetInViewport;
             if(limitingOffset < 0) { limitingOffset = 0; }
-            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
+            return this.c._viewportHeight - this.c.child.offsetHeight - limitingOffset - this.offsetInViewport - contextTop - computedStyle.toFloat(childStyles.marginTop) + 'px';
         },
 
-        isOffScreen: function(offsetInViewport) {
-            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + offsetInViewport ||
-              this.c._windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + offsetInViewport;
+        isOffScreen: function() {
+            return this._viewportTop() > this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.parent.offsetHeight + this.offsetInViewport ||
+              this.windowLimiter < this.c._fullOffset('offsetTop', this.c.parent) + computedStyle.getFloat(this.c.parent, 'paddingTop') + this.c.child.offsetHeight + this.offsetInViewport;
         },
 
         _viewportTop: function () {
@@ -506,20 +503,16 @@ var fixto = (function ($, window, document) {
         _toresize : ieversion===8 ? document.documentElement : window,
 
         _onscroll: function _onscroll() {
-            this._windowLimiter = this._calc.windowLimiter();
-            this._parentLimiter = this._calc.parentLimiter();
+            this._calc.refreshEnvironment(this._offsetInViewport());
 
-            var offsetInViewport = this._offsetInViewport();
-
-            if (!this.fixed && this._calc.isBetween(offsetInViewport) && this._viewportIsBigEnough()) {
-                this._fix(offsetInViewport);
+            if (!this.fixed && this._calc.isBetween() && this._viewportIsBigEnough()) {
+                this._fix();
             } else {
-                if (this.fixed && this._calc.isOffScreen(offsetInViewport)) {
+                if (this.fixed && this._calc.isOffScreen()) {
                     this._unfix();
                     return;
                 }
-
-                this._adjust(offsetInViewport);
+                this._adjust();
             }
         },
 
@@ -532,7 +525,7 @@ var fixto = (function ($, window, document) {
           return this._viewportHeight - (this.child.offsetHeight + computedStyle.toFloat(childStyles.marginTop) + computedStyle.toFloat(childStyles.marginBottom));
         },
 
-        _adjust: function _adjust(offsetInViewport) {
+        _adjust: function () {
             var contextTop = 0;
             var childStyles = computedStyle.getAll(this.child);
             var context = null;
@@ -546,7 +539,7 @@ var fixto = (function ($, window, document) {
                 }
             }
 
-            this.child.style.top = this._calc.innerTop(offsetInViewport, contextTop, childStyles);
+            this.child.style.top = this._calc.innerTop(contextTop, childStyles);
         },
 
         // Calculate cumulative offset of the element.
@@ -590,7 +583,7 @@ var fixto = (function ($, window, document) {
             return context;
         },
 
-        _fix: function (offsetInViewport) {
+        _fix: function () {
             var child = this.child;
             var childStyle = child.style;
             var childStyles = computedStyle.getAll(child);
@@ -622,7 +615,7 @@ var fixto = (function ($, window, document) {
             childStyle.position = 'fixed';
             this._$child.addClass(this.options.className);
             this.fixed = true;
-            this._adjust(offsetInViewport);
+            this._adjust();
         },
 
         _unfix: function () {

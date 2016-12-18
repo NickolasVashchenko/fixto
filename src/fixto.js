@@ -440,7 +440,7 @@ var fixto = (function ($, window, document) {
 
     $.extend(InvertedCalc.prototype, {
         windowLimiter: function () {
-            return (document.documentElement.scrollTop || document.body.scrollTop) + this.c._viewportHeight;
+            return this._viewportTop() + this.c._viewportHeight;
         },
 
         parentLimiter: function () {
@@ -469,7 +469,7 @@ var fixto = (function ($, window, document) {
         },
 
         _viewportTop: function () {
-          return this.c._windowLimiter - this.c._viewportHeight;
+            return document.documentElement.scrollTop || document.body.scrollTop;
         }
 
     });
